@@ -97,7 +97,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
       "udp" => 0,
     }
 
-    # conert tls to integers
+    # convert tls to integers
     @tls_map = {
       "none" => 0, "false" => 0,
       "true" => 1,
