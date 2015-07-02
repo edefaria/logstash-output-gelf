@@ -194,7 +194,11 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
     end
 
     if @ship_tags
-      m["_tags"] = event["tags"].join(', ') if event["tags"]
+      if event["tags"].is_a?(Array)
+        m["_tags"] = event["tags"].join(', ')
+      else
+        m["_tags"] = event["tags"]
+      end
     end
 
     if @custom_fields
@@ -216,7 +220,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
     else
       level = event.sprintf(@level.to_s)
     end
-    m["level"] = (@level_map[level.downcase] || level).to_i
+    m["level"] = (@level_map[level.to_s.downcase] || level).to_i
 
     @logger.debug(["Sending GELF event", m])
     begin
