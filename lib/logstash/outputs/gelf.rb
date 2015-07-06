@@ -1,6 +1,7 @@
 # encoding: utf-8
 require "logstash/namespace"
 require "logstash/outputs/base"
+require "date"
 
 # This output generates messages in GELF format. This is most useful if you
 # want to use Logstash to output events to Graylog2.
@@ -68,6 +69,9 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
   # Ship tags within events. This will cause Logstash to ship the tags of an
   # event as the field `\_tags`.
   config :ship_tags, :validate => :boolean, :default => true
+
+  # Ship timestamp to float epoch
+  config :ship_timestamp, :validate => :boolean, :default => true
 
   # Ignore these fields when `ship_metadata` is set. Typically this lists the
   # fields used in dynamic values for GELF fields.
@@ -193,6 +197,17 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
       end
     end
 
+    if @ship_timestamp
+      if !event.timestamp.nil?
+        begin
+          dt = DateTime.parse(event.timestamp).to_time.to_f.to_s
+        rescue ArgumentError, NoMethodError
+          dt = nil
+        end
+        m["timestamp"] = dt if !dt.nil?
+      end
+    end
+
     if @ship_tags
       if event["tags"].is_a?(Array)
         m["_tags"] = event["tags"].join(', ')
@@ -214,17 +229,17 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
         parsed_value = event.sprintf(value)
         next if value.count('%{') > 0 and parsed_value == value
 
-        level = parsed_value
+        level = parsed_value.to_s
         break
       end
     else
       level = event.sprintf(@level.to_s)
     end
-    m["level"] = (@level_map[level.to_s.downcase] || level).to_i
+    m["level"] = (@level_map[level.downcase] || level).to_i
 
     @logger.debug(["Sending GELF event", m])
     begin
-      @gelf.notify!(m, :timestamp => event.timestamp.to_f)
+      @gelf.notify!(m)
     rescue
       @logger.warn("Trouble sending GELF event", :gelf_event => m,
                    :event => event, :error => $!)
