@@ -206,13 +206,13 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
         end
         m["@timestamp"] = dt if !dt.nil?
       end
-      if event.timestamp.nil?
+      if event["timestamp"].nil?
         if !m['@timestamp'].nil?
           m["timestamp"] = m['@timestamp']
         end
       else
         begin
-          dt = DateTime.parse(event.timestamp.to_iso8601).to_time.to_f.to_s
+          dt = DateTime.parse(event["timestamp"].to_iso8601).to_time.to_f.to_s
         rescue ArgumentError, NoMethodError
           dt = nil
         end
