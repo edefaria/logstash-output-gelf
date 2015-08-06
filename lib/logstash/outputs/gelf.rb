@@ -23,8 +23,14 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
   # The GELF protocol (TCP or UDP).
   config :protocol, :validate => :string, :default => "UDP"
 
-  # The GELF TLS option
-  config :tls, :validate => :string, :default => "NONE"
+  # TLS option (true/false) to add TLS encryption for TCP protocol
+  config :tls, :validate => :boolean
+
+  # Check SSL (true/flase) when TCP/TLS protocol is used
+  config :check_ssl, :validate => :boolean
+
+  # Force a TLS version (like "TLSv1_2") when TCP/TLS protocol is used
+  config :tls_version, :validate => :string
 
   # Allow overriding of the GELF `sender` field. This is useful if you
   # want to use something other than the event's source host as the
@@ -101,15 +107,9 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
       "udp" => 0,
     }
 
-    # convert tls to integers
-    @tls_map = {
-      "none" => 0, "false" => 0,
-      "true" => 1,
-    }
-
     #@gelf = GELF::Notifier.new(@host, @port, @chunksize, option_hash)
     #@gelf = GELF::Notifier.new(@host, @port, @chunksize)
-    @gelf = GELF::Notifier.new(@host, @port, @chunksize, { :protocol => (@protocol_map[protocol.downcase] || protocol).to_i, :tls => (@tls_map[tls.downcase] || tls).to_i })
+    @gelf = GELF::Notifier.new(@host, @port, @chunksize, { :protocol => (@protocol_map[protocol.downcase] || protocol).to_i, :tls => tls, :tls_version => tls_version, :check_ssl => check_ssl })
 
     # This sets the 'log level' of gelf; since we're forwarding messages, we'll
     # want to forward *all* messages, so set level to 0 so all messages get
