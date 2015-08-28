@@ -109,7 +109,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
 
     #@gelf = GELF::Notifier.new(@host, @port, @chunksize, option_hash)
     #@gelf = GELF::Notifier.new(@host, @port, @chunksize)
-    @gelf = GELF::Notifier.new(@host, @port, @chunksize, { :protocol => (@protocol_map[protocol.downcase] || protocol).to_i, :tls => tls, :tls_version => tls_version, :check_ssl => check_ssl })
+    @gelf = GELF::Notifier.new(@host, @port, @chunksize, nil, { :protocol => (@protocol_map[protocol.downcase] || protocol).to_i, :tls => tls, :tls_version => tls_version, :check_ssl => check_ssl })
 
     # This sets the 'log level' of gelf; since we're forwarding messages, we'll
     # want to forward *all* messages, so set level to 0 so all messages get
