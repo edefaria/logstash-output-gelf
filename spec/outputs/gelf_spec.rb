@@ -45,10 +45,10 @@ describe LogStash::Outputs::Gelf do
 
     it "sends the generated event to gelf" do
       expect(subject.gelf).to receive(:notify!).with(hash_including("short_message"=> message,
-                                                                    "full_message"=> message),
+                                                                    "full_message"=> message,
                                                                     "level"=> 6,
                                                                     "_test"=> "logstash",
-                                                                    "_tags"=> ["foo","bar"] ,
+                                                                    "_tags"=> ["foo","bar"]),
                                                      hash_including(:timestamp))
       subject.receive(event)
     end
@@ -68,9 +68,9 @@ describe LogStash::Outputs::Gelf do
 
     it "sends the generated event to gelf" do
       expect(subject.gelf).to receive(:notify!).with(hash_including("short_message"=> message,
-                                                                    "full_message"=> message),
+                                                                    "full_message"=> message,
                                                                      "level"=> 3,
-                                                                    "_tags"=> "_grokparsefailure"
+                                                                    "_tags"=> "_grokparsefailure"),
                                                      hash_including(:timestamp))
       subject.receive(event)
     end
