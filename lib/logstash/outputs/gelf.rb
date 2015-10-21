@@ -97,6 +97,16 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
   config :short_message, :validate => :string, :default => "short_message"
 
   public
+
+  def inject_client(gelf)
+    @gelf = gelf
+    self
+  end
+
+  def gelf
+    @gelf
+  end
+
   def register
     require "gelf" # rubygem 'gelf'
     option_hash = Hash.new
