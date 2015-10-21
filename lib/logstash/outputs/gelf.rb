@@ -1,7 +1,6 @@
 # encoding: utf-8
 require "logstash/namespace"
 require "logstash/outputs/base"
-require "date"
 
 # This output generates messages in GELF format. This is most useful if you
 # want to use Logstash to output events to Graylog2.
@@ -19,18 +18,6 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
 
   # The GELF chunksize. You usually don't need to change this.
   config :chunksize, :validate => :number, :default => 1420
-
-  # The GELF protocol (TCP or UDP).
-  config :protocol, :validate => :string, :default => "UDP"
-
-  # TLS option (true/false) to add TLS encryption for TCP protocol
-  config :tls, :validate => :boolean
-
-  # Check SSL (true/flase) when TCP/TLS protocol is used
-  config :check_ssl, :validate => :boolean
-
-  # Force a TLS version (like "TLSv1_2") when TCP/TLS protocol is used
-  config :tls_version, :validate => :string
 
   # Allow overriding of the GELF `sender` field. This is useful if you
   # want to use something other than the event's source host as the
@@ -76,9 +63,6 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
   # event as the field `\_tags`.
   config :ship_tags, :validate => :boolean, :default => true
 
-  # Ship timestamp to float epoch
-  config :ship_timestamp, :validate => :boolean, :default => true
-
   # Ignore these fields when `ship_metadata` is set. Typically this lists the
   # fields used in dynamic values for GELF fields.
   config :ignore_metadata, :validate => :array, :default => [ "@timestamp", "@version", "severity", "host", "source_host", "source_path", "short_message" ]
@@ -111,15 +95,8 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
     require "gelf" # rubygem 'gelf'
     option_hash = Hash.new
 
-    # convert procotol to integers
-    @protocol_map = {
-      "tcp" => 1,
-      "udp" => 0,
-    }
-
     #@gelf = GELF::Notifier.new(@host, @port, @chunksize, option_hash)
-    #@gelf = GELF::Notifier.new(@host, @port, @chunksize)
-    @gelf = GELF::Notifier.new(@host, @port, @chunksize, nil, { :protocol => (@protocol_map[protocol.downcase] || protocol).to_i, :tls => tls, :tls_version => tls_version, :check_ssl => check_ssl })
+    @gelf ||= GELF::Notifier.new(@host, @port, @chunksize)
 
     # This sets the 'log level' of gelf; since we're forwarding messages, we'll
     # want to forward *all* messages, so set level to 0 so all messages get
@@ -207,35 +184,8 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
       end
     end
 
-    if @ship_timestamp
-      if !event['@timestamp'].nil?
-        begin
-          dt = DateTime.parse(event['@timestamp'].to_iso8601).to_time.to_f.to_s
-        rescue ArgumentError, NoMethodError
-          dt = nil
-        end
-        m["@timestamp"] = dt if !dt.nil?
-      end
-      if event["timestamp"].nil?
-        if !m['@timestamp'].nil?
-          m["timestamp"] = m['@timestamp']
-        end
-      else
-        begin
-          dt = DateTime.parse(event["timestamp"].to_iso8601).to_time.to_f.to_s
-        rescue ArgumentError, NoMethodError
-          dt = nil
-        end
-        m["timestamp"] = dt if !dt.nil?
-      end
-    end
-
     if @ship_tags
-      if event["tags"].is_a?(Array)
-        m["_tags"] = event["tags"].join(', ')
-      else
-        m["_tags"] = event["tags"] if event["tags"]
-      end
+      m["_tags"] = event["tags"].join(', ') if event["tags"]
     end
 
     if @custom_fields
@@ -251,7 +201,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
         parsed_value = event.sprintf(value)
         next if value.count('%{') > 0 and parsed_value == value
 
-        level = parsed_value.to_s
+        level = parsed_value
         break
       end
     else
@@ -261,7 +211,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
 
     @logger.debug(["Sending GELF event", m])
     begin
-      @gelf.notify!(m)
+      @gelf.notify!(m, :timestamp => event.timestamp.to_f)
     rescue
       @logger.warn("Trouble sending GELF event", :gelf_event => m,
                    :event => event, :error => $!)
