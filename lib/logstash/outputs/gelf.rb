@@ -210,7 +210,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
     if @ship_timestamp
       if !event['@timestamp'].nil?
         begin
-          dt = DateTime.parse(event['@timestamp'].to_iso8601).to_time.to_f.to_s
+          dt = DateTime.parse(event['@timestamp'].to_iso8601).to_time.to_f
         rescue ArgumentError, NoMethodError
           dt = nil
         end
@@ -222,7 +222,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
         end
       else
         begin
-          dt = DateTime.parse(event["timestamp"].to_iso8601).to_time.to_f.to_s
+          dt = DateTime.parse(event["timestamp"].to_iso8601).to_time.to_f
         rescue ArgumentError, NoMethodError
           dt = nil
         end
