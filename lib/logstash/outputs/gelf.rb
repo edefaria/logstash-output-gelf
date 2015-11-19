@@ -32,6 +32,9 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
   # Force a TLS version (like "TLSv1_2") when TCP/TLS protocol is used
   config :tls_version, :validate => :string
 
+  # Number of TCP retry to send a message
+  config :tcp_retry , :validate => :number, :default => 0
+
   # Allow overriding of the GELF `sender` field. This is useful if you
   # want to use something other than the event's source host as the
   # "sender" of an event. A common case for this is using the application name
@@ -119,7 +122,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
 
     #@gelf = GELF::Notifier.new(@host, @port, @chunksize, option_hash)
     #@gelf = GELF::Notifier.new(@host, @port, @chunksize)
-    @gelf = GELF::Notifier.new(@host, @port, @chunksize, nil, { :protocol => (@protocol_map[protocol.downcase] || protocol).to_i, :tls => tls, :tls_version => tls_version, :check_ssl => check_ssl })
+    @gelf = GELF::Notifier.new(@host, @port, @chunksize, nil, { :protocol => (@protocol_map[protocol.downcase] || protocol).to_i, :tls => tls, :tls_version => tls_version, :check_ssl => check_ssl, :tcp_retry => tcp_retry })
 
     # This sets the 'log level' of gelf; since we're forwarding messages, we'll
     # want to forward *all* messages, so set level to 0 so all messages get
