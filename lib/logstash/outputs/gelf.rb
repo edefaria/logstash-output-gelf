@@ -26,7 +26,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
   # TLS option (true/false) to add TLS encryption for TCP protocol
   config :tls, :validate => :boolean
 
-  # Check SSL (true/flase) when TCP/TLS protocol is used
+  # Check SSL trusted certificate (true/flase) when TCP/TLS protocol is used
   config :check_ssl, :validate => :boolean
 
   # Force a TLS version (like "TLSv1_2") when TCP/TLS protocol is used
@@ -34,6 +34,9 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
 
   # Number of TCP retry to send a message
   config :tcp_retry , :validate => :number, :default => 0
+
+  # Number of ms to wait between each TCP retry
+  config :tcp_retry_ms , :validate => :number, :default => 50
 
   # Allow overriding of the GELF `sender` field. This is useful if you
   # want to use something other than the event's source host as the
