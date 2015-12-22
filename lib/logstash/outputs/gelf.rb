@@ -246,13 +246,7 @@ class LogStash::Outputs::Gelf < LogStash::Outputs::Base
 
     if @custom_fields
       @custom_fields.each do |field_name, field_value|
-        unless field_name == 'id'
-          if field_value.is_a?(String)
-            m["_#{field_name}"] = event.sprintf(field_value)
-          else
-            m["_#{field_name}"] = field_value
-          end
-        end
+        m["_#{field_name}"] = event.sprintf(field_value) unless field_name == 'id'
       end
     end
 
